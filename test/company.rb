@@ -55,6 +55,8 @@ class Customer
 
   text_node :uid, "@uid"
   text_node :name, "name"
+  enum_node :payment_method, "payment_method",
+                [ 'cash', 'sweeties', 'cookies', 'independent arms broker' ]
 end
 
 
