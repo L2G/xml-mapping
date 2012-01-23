@@ -8,6 +8,7 @@ require 'xml/mapping/standard_nodes'
 
 XML::Mapping.add_node_class XML::Mapping::Node
 XML::Mapping.add_node_class XML::Mapping::TextNode
+XML::Mapping.add_node_class XML::Mapping::EnumNode
 XML::Mapping.add_node_class XML::Mapping::NumericNode
 XML::Mapping.add_node_class XML::Mapping::ObjectNode
 XML::Mapping.add_node_class XML::Mapping::BooleanNode

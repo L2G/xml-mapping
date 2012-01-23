@@ -33,6 +33,8 @@ module XML
       end
     end
 
+    class EnumNode < TextNode; end
+
     # Node factory function synopsis:
     # 
     #   numeric_node :_attrname_, _path_ [, :default_value=>_obj_]
