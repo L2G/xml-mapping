@@ -1,7 +1,9 @@
 # -*- ruby -*-
 # adapted from active_record's Rakefile
 
-require 'build_lib/rdoc_ext'
+$:.unshift "."
+
+#require 'build_lib/rdoc_ext'
 
 require 'rubygems'
 require 'rake'
@@ -21,7 +23,7 @@ class Rake::PackageTask
 end
 
 class Rake::GemPackageTask
-  public :gem_file
+  #public :gem_file
 end
 
 
@@ -100,8 +102,8 @@ rule '.intout' => ['.intin.rb'] do |task|
         Dir.chdir File.dirname(task.name)
         fin.read.split("#<=\n").each do |snippet|
 
-          snippet.scan(/^#:(.*?):$/) do |(switch,)|
-            case switch
+          snippet.scan(/^#:(.*?):$/) do |switches|
+            case switches[0]
             when "visible"
               visible=true
             when "invisible"
@@ -208,7 +210,7 @@ Rake::GemPackageTask.new(spec) do |p|
   # created by GemPackageTask
   file "#{p.package_dir}/#{p.tgz_file}"  => [ "test_run", :rdoc ]
   file "#{p.package_dir}/#{p.zip_file}" => [ "test_run", :rdoc ]
-  file "#{p.package_dir}/#{p.gem_file}" => [ "test_run", :rdoc ]
+  #file "#{p.package_dir}/#{p.gem_file}" => [ "test_run", :rdoc ]
 end
 
 

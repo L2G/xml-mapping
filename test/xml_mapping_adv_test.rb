@@ -3,7 +3,6 @@ require File.dirname(__FILE__)+"/tests_init"
 require 'test/unit'
 require 'documents_folders'
 require 'bookmarks'
-require 'yaml'
 
 class XmlMappingAdvancedTest < Test::Unit::TestCase
   def setup
@@ -13,8 +12,12 @@ class XmlMappingAdvancedTest < Test::Unit::TestCase
     Object.send(:remove_const, "Document")
     Object.send(:remove_const, "Folder")
 
-    $".delete "documents_folders.rb"
-    $".delete "bookmarks.rb"
+    unless ($".delete "documents_folders.rb")  # works in 1.8 only. In 1.9, $" contains absolute paths.
+      $".delete_if{|name| name =~ %r!test/documents_folders.rb$!}
+    end
+    unless ($".delete "bookmarks.rb")
+      $".delete_if{|name| name =~ %r!test/bookmarks.rb$!}
+    end
     require 'documents_folders'
     require 'bookmarks'
 
@@ -26,23 +29,20 @@ class XmlMappingAdvancedTest < Test::Unit::TestCase
   end
 
   def test_read_polymorphic_object
-    assert_equal YAML::load(<<-EOS), @f
-      --- !ruby/object:Folder 
-      entries: 
-        - !ruby/object:Document 
-          contents: " inhale, exhale"
-          name: plan
-        - !ruby/object:Folder 
-          entries: 
-            - !ruby/object:Folder 
-              entries: 
-                - !ruby/object:Document 
-                  contents: foo bar baz
-                  name: README
-              name: xml-mapping
-          name: work
-      name: home
-    EOS
+    expected = Folder.new \
+      :name => "home",
+      :entries => [
+                   Document.new(:name => "plan", :contents => " inhale, exhale"),
+                   Folder.new(:name => "work",
+                              :entries => [
+                                           Folder.new(:name => "xml-mapping",
+                                                      :entries => [Document.new(:name => "README",
+                                                                                :contents => "foo bar baz")]
+                                                      )
+                                          ])
+                  ]
+
+    assert_equal expected, @f
   end
 
   def test_write_polymorphic_object

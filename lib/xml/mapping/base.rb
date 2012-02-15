@@ -301,16 +301,26 @@ module XML
       end
 
       # Add getter and setter methods for a new attribute named _name_
-      # to this class. This is a convenience method intended to be
-      # called from Node class initializers.
+      # (must be a symbol or a string) to this class, taking care not
+      # to replace existing getters/setters.  This is a convenience
+      # method intended to be called from Node class initializers.
       def add_accessor(name)
-        name = name.id2name if name.kind_of? Symbol
-        unless self.instance_methods.include?(name)
+        # existing methods search. Search for symbols and strings
+        #  to be compatible with Ruby 1.8 and 1.9.
+        methods = self.instance_methods
+        if methods[0].kind_of? Symbol
+          getter = :"#{name}"
+          setter = :"#{name}="
+        else
+          getter = "#{name}"
+          setter = "#{name}="
+        end
+        unless methods.include?(getter)
           self.module_eval <<-EOS
             attr_reader :#{name}
           EOS
         end
-        unless self.instance_methods.include?("#{name}=")
+        unless methods.include?(setter)
           self.module_eval <<-EOS
             attr_writer :#{name}
           EOS
@@ -337,6 +347,11 @@ module XML
         # doesn't work, try allocate, which bypasses the initializer.
         begin
           obj = self.new
+          #TODO: this will normally invoke our base XML::Mapping#initialize, which calls
+          #  obj.initialize_xml_mapping, which is called below again (with the correct :mapping parameter).
+          #  obj.initialize_xml_mapping calls obj_initializing on all nodes.
+          #  So obj_initializing may be called on the nodes twice for this initialization.
+          #  Maybe document this for node writers?
         rescue ArgumentError # TODO: this may hide real errors.
                              #   how to statically check whether
                              #   self self.new accepts an empty
@@ -538,9 +553,9 @@ module XML
             alias_method :default_xml_to_obj, :xml_to_obj
             def xml_to_obj(obj,xml)
               begin
-                @options[:reader].call(obj,xml)
-              rescue ArgumentError
                 @options[:reader].call(obj,xml,self.method(:default_xml_to_obj))
+              rescue ArgumentError  # thrown if @options[:reader] is a lambda (i.e. no Proc) with !=3 args (e.g. proc{...} in ruby1.8)
+                @options[:reader].call(obj,xml)
               end
             end
           end
@@ -552,9 +567,9 @@ module XML
             alias_method :default_obj_to_xml, :obj_to_xml
             def obj_to_xml(obj,xml)
               begin
-                @options[:writer].call(obj,xml)
-              rescue ArgumentError
                 @options[:writer].call(obj,xml,self.method(:default_obj_to_xml))
+              rescue ArgumentError # thrown if (see above)
+                @options[:writer].call(obj,xml)
               end
             end
           end
